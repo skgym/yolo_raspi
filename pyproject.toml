@@ -28,7 +28,8 @@ name = "ultralytics"
 dynamic = ["version"]
 description = "Ultralytics YOLO 🚀 for SOTA object detection, multi-object tracking, instance segmentation, pose estimation and image classification."
 readme = "README.md"
-requires-python = ">=3.8"
+#requires-python = ">=3.8" 
+requires-python = ">=3.11,<4.0" 
 license = { "text" = "AGPL-3.0" }
 keywords = ["machine-learning", "deep-learning", "computer-vision", "ML", "DL", "AI", "YOLO", "YOLOv3", "YOLOv5", "YOLOv8", "YOLOv9", "YOLOv10", "YOLO11", "HUB", "Ultralytics"]
 authors = [
@@ -74,6 +75,13 @@ dependencies = [
     "psutil", # system utilization
     "polars",
     "ultralytics-thop>=2.0.0", # FLOPs computation https://github.com/ultralytics/thop
+    "aiohttp>=3.13.1",
+    "pandas>=2.3.3",
+    "lxml>=6.0.2",
+    "tqdm>=4.67.1",
+    "openai>=2.6.0",
+    "decord>=0.6.0",
+    "lap>=0.5.12",
 ]
 
 # Optional dependencies ------------------------------------------------------------------------------------------------
