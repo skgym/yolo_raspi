@@ -5,10 +5,10 @@ from ultralytics import YOLO
 import time
 
 #model = YOLO("/home/dubx/Projects/yolov11/model/best2.pt")
-model = YOLO("model/yolo11n.pt")
+model = YOLO("model/best2.pt")
 
 
-source = "video/1.mp4"  #2
+source = "video/2.mp4"  #2
 imgsource = "/home/dubx/Projects/yolov11/video/test1.png"
 
 time1 = time.time()

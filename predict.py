@@ -5,7 +5,7 @@ from ultralytics import YOLO
 import time
 
 #model = YOLO("/home/dubx/Projects/yolov11/model/best2.pt")
-model = YOLO("model/yolo11n.pt")
+model = YOLO("model/best2.pt")
 
 
 source = "video/1.mp4"  #2
