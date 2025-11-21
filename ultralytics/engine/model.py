@@ -28,7 +28,7 @@ from ultralytics.utils import (
 )
 import openai
 import requests
-from decord import VideoReader, cpu
+#from decord import VideoReader, cpu
 
 class Model(nn.Module):
     """
