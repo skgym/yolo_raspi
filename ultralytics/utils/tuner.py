@@ -1,5 +1,7 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+from __future__ import annotations
+
 import subprocess
 
 from ultralytics.cfg import TASK2DATA, TASK2METRIC, get_save_dir
@@ -7,10 +9,14 @@ from ultralytics.utils import DEFAULT_CFG, DEFAULT_CFG_DICT, LOGGER, NUM_THREADS
 
 
 def run_ray_tune(
-    model, space: dict = None, grace_period: int = 10, gpu_per_trial: int = None, max_samples: int = 10, **train_args
+    model,
+    space: dict | None = None,
+    grace_period: int = 10,
+    gpu_per_trial: int | None = None,
+    max_samples: int = 10,
+    **train_args,
 ):
-    """
-    Runs hyperparameter tuning using Ray Tune.
+    """Runs hyperparameter tuning using Ray Tune.
 
     Args:
         model (YOLO): Model to run the tuner on.
@@ -23,7 +29,7 @@ def run_ray_tune(
     Returns:
         (dict): A dictionary containing the results of the hyperparameter search.
 
-    Example:
+    Examples:
         ```python
         from ultralytics import YOLO
 
@@ -88,8 +94,7 @@ def run_ray_tune(
     model_in_store = ray.put(model)
 
     def _tune(config):
-        """
-        Trains the YOLO model with the specified hyperparameters and additional arguments.
+        """Trains the YOLO model with the specified hyperparameters and additional arguments.
 
         Args:
             config (dict): A dictionary of hyperparameters to use for training.
