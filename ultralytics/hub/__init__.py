@@ -1,5 +1,9 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+from __future__ import annotations
+
+from typing import Optional
+
 import requests
 
 from ultralytics.data.utils import HUBDatasetStats
@@ -9,30 +13,29 @@ from ultralytics.hub.utils import HUB_API_ROOT, HUB_WEB_ROOT, PREFIX, events
 from ultralytics.utils import LOGGER, SETTINGS, checks
 
 __all__ = (
-    "PREFIX",
     "HUB_WEB_ROOT",
+    "PREFIX",
     "HUBTrainingSession",
-    "login",
-    "logout",
-    "reset_model",
+    "check_dataset",
+    "events",
     "export_fmts_hub",
     "export_model",
     "get_export",
-    "check_dataset",
-    "events",
+    "login",
+    "logout",
+    "reset_model",
 )
 
 
-def login(api_key: str = None, save=True) -> bool:
-    """
-    Log in to the Ultralytics HUB API using the provided API key.
+def login(api_key: str | None = None, save=True) -> bool:
+    """Log in to the Ultralytics HUB API using the provided API key.
 
     The session is not stored; a new session is created when needed using the saved SETTINGS or the HUB_API_KEY
     environment variable if successfully authenticated.
 
     Args:
-        api_key (str, optional): API key to use for authentication.
-            If not provided, it will be retrieved from SETTINGS or HUB_API_KEY environment variable.
+        api_key (str, optional): API key to use for authentication. If not provided, it will be retrieved from SETTINGS
+            or HUB_API_KEY environment variable.
         save (bool, optional): Whether to save the API key to SETTINGS if authentication is successful.
 
     Returns:
@@ -68,10 +71,9 @@ def login(api_key: str = None, save=True) -> bool:
 
 
 def logout():
-    """
-    Log out of Ultralytics HUB by removing the API key from the settings file. To log in again, use 'yolo hub login'.
+    """Log out of Ultralytics HUB by removing the API key from the settings file. To log in again, use 'yolo hub login'.
 
-    Example:
+    Examples:
         ```python
         from ultralytics import hub
 
@@ -95,7 +97,7 @@ def export_fmts_hub():
     """Returns a list of HUB-supported export formats."""
     from ultralytics.engine.exporter import export_formats
 
-    return list(export_formats()["Argument"][1:]) + ["ultralytics_tflite", "ultralytics_coreml"]
+    return [*list(export_formats()["Argument"][1:]), "ultralytics_tflite", "ultralytics_coreml"]
 
 
 def export_model(model_id="", format="torchscript"):
@@ -121,15 +123,14 @@ def get_export(model_id="", format="torchscript"):
 
 
 def check_dataset(path: str, task: str) -> None:
-    """
-    Function for error-checking HUB dataset Zip file before upload. It checks a dataset for errors before it is uploaded
-    to the HUB. Usage examples are given below.
+    """Function for error-checking HUB dataset Zip file before upload. It checks a dataset for errors before it is
+    uploaded to the HUB. Usage examples are given below.
 
     Args:
         path (str): Path to data.zip (with data.yaml inside data.zip).
         task (str): Dataset task. Options are 'detect', 'segment', 'pose', 'classify', 'obb'.
 
-    Example:
+    Examples:
         Download *.zip files from https://github.com/ultralytics/hub/tree/main/example_datasets
             i.e. https://github.com/ultralytics/hub/raw/main/example_datasets/coco8.zip for coco8.zip.
         ```python
