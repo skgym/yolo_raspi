@@ -75,7 +75,7 @@ dependencies = [
     "torchvision>=0.9.0",
     "psutil", # system utilization
     "polars",
-    "ultralytics-thop>=2.0.0", # FLOPs computation https://github.com/ultralytics/thop
+    "ultralytics-thop>=2.0.20", # FLOPs computation https://github.com/ultralytics/thop
     "aiohttp>=3.13.1",
     "pandas>=2.3.3",
     "lxml>=6.0.2",
