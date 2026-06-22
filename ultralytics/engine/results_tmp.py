@@ -24,71 +24,8 @@ from ultralytics.utils import LOGGER, SimpleClass, ops
 from ultralytics.utils.checks import check_requirements
 from ultralytics.utils.plotting import Annotator, colors, save_one_box
 from ultralytics.utils.torch_utils import smart_inference_mode
-
+from datetime import datetime
 from collections import Counter
-import queue
-import threading
-
-TIME_OFFSET = 0.0
-
-def synchronize_clocks(url='http://192.168.0.122:40000/time'):
-    global TIME_OFFSET
-    offsets = []
-    print("Synchronizing clocks...")
-    try:
-        for _ in range(5):
-            t1 = time.time()
-            response = requests.get(url, timeout=2.0)
-            t4 = time.time()
-
-            if response.status_code == 200:
-                server_data = response.json()
-                t_server = server_data['server_time']
-
-                rtt = t4 -t1
-                latency = rtt / 2
-
-                offset = t_server - (t1 + latency)
-                offsets.append(offset)
-            time.sleep(0.1)
-        if offsets:
-            TIME_OFFSET = sum(offsets) / len(offsets)
-        else:
-            print("Failed synchronize clocks (no valid response)")
-
-    except Exception as e:
-        print("Failed synchronize clocks")
-
-DATA_QUEUE = queue.Queue(maxsize=1)
-
-def _requests_sender_worker():
-    url = 'http://192.168.0.122:40000/endpoint'
-    
-    session = requests.Session()
-    
-    while True:
-        # キューからデータを取得（データが来るまでここで待機＝ブロック）
-        data = DATA_QUEUE.get()
-        
-        if data is None:  # Noneが来たら終了シグナルとみなす
-            break
-
-        try:
-            response = session.post(url, json=data, timeout=2.0) # タイムアウト設定でフリーズ防止
-            
-            if response.status_code != 200:
-                LOGGER.error(f"送信エラー: {response.status_code}")
-                
-        except requests.exceptions.RequestException as e:
-            # 接続エラーなどが起きてもメイン処理を止めない
-            LOGGER.error(f"通信エラー: {e}")
-            
-        finally:
-            DATA_QUEUE.task_done()
-
-synchronize_clocks()
-_worker_thread = threading.Thread(target=_requests_sender_worker, daemon=True)
-_worker_thread.start()
 
 class BaseTensor(SimpleClass):
     """
@@ -301,7 +238,7 @@ class Results(SimpleClass):
     counter = Counter()
 
     def __init__(
-        self, orig_img, path, names, boxes=None, masks=None, probs=None, keypoints=None, obb=None, speed=None, gps_data=None
+        self, orig_img, path, names, boxes=None, masks=None, probs=None, keypoints=None, obb=None, speed=None
     ) -> None:
         """
         Initialize the Results class for storing and manipulating inference results.
@@ -344,7 +281,6 @@ class Results(SimpleClass):
         self._keys = "boxes", "masks", "probs", "keypoints", "obb"
 
         self.counter = Results.counter
-        self.gps_data = gps_data
 
 
     def __getitem__(self, idx):
@@ -805,10 +741,10 @@ class Results(SimpleClass):
                 line += (conf,) * save_conf + (() if id is None else (id,))
                 texts.append(("%g " * len(line)).rstrip() % line)
 
-        # if texts:
-        #     Path(txt_file).parent.mkdir(parents=True, exist_ok=True)  # make directory
-        #     with open(txt_file, "a") as f:
-        #         f.writelines(text + "\n" for text in texts)
+        if texts:
+            Path(txt_file).parent.mkdir(parents=True, exist_ok=True)  # make directory
+            with open(txt_file, "a") as f:
+                f.writelines(text + "\n" for text in texts)
 
     def save_crop(self, save_dir, file_name=Path("im.jpg"), frame_id=None):
         """
@@ -871,108 +807,92 @@ class Results(SimpleClass):
 
         folder_name = Path(file_name).stem
         crop_dir = Path(save_dir) / folder_name
-        # crop_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
-        #coordinates_path = crop_dir / "coordinates.txt"
-        # coordinates_path = crop_dir / f"{folder_name}.txt"
+        crop_dir.mkdir(parents=True, exist_ok=True)  # Ensure directory exists
+        # coordinates_path = crop_dir / "coordinates.txt"
+        coordinates_path = crop_dir / f"{folder_name}.txt"
         count_dict = {}  # Dictionary to keep track of the count of each class
 
         detection_results = []  # 用于存储检测结果
-        #推論時間の計算
-        t_proc = sum(self.speed.values()) / 1000.0 if self.speed else 0.0
-        #送信時刻算出用
-        timestamp_send = time.time() + TIME_OFFSET
-        for d in self.boxes:
-            # Extract the bounding box coordinates from the first row of the tensor
-            bbox = d.xyxy[0]  # Assuming d.xyxy is a tensor with the bbox coordinates on device 'cuda:0'
 
-            if bbox.numel() != 4:
-                LOGGER.error(f"Expected 4 bounding box coordinates, got {bbox.numel()}: {bbox}")
-                continue  # Skip this detection
+        with open(coordinates_path, 'w') as coord_file:
+            for d in self.boxes:
+                # Extract the bounding box coordinates from the first row of the tensor
+                bbox = d.xyxy[0]  # Assuming d.xyxy is a tensor with the bbox coordinates on device 'cuda:0'
 
-            class_name = self.names[int(d.cls)]
-            if class_name in count_dict:
-                count_dict[class_name] += 1
-            else:
-                count_dict[class_name] = 1
+                if bbox.numel() != 4:
+                    LOGGER.error(f"Expected 4 bounding box coordinates, got {bbox.numel()}: {bbox}")
+                    continue  # Skip this detection
 
-            save_path = crop_dir / f"{folder_name}_{class_name}_{count_dict[class_name]}{Path(file_name).suffix}"
-            bbox_str = f"{save_path.name}: {bbox[0].item()}, {bbox[1].item()}, {bbox[2].item()}, {bbox[3].item()}"
-            # coord_file.write(bbox_str + "\n")  # Write bounding box coordinates to file
+                class_name = self.names[int(d.cls)]
+                if class_name in count_dict:
+                    count_dict[class_name] += 1
+                else:
+                    count_dict[class_name] = 1
 
-            # save_one_box(
-            #     bbox,  # Keep the bbox as a tensor
-            #     self.orig_img.copy(),
-            #     file=save_path,
-            #     BGR=True,
-            # )
+                save_path = crop_dir / f"{folder_name}_{class_name}_{count_dict[class_name]}{Path(file_name).suffix}"
+                bbox_str = f"{save_path.name}: {bbox[0].item()}, {bbox[1].item()}, {bbox[2].item()}, {bbox[3].item()}"
+                coord_file.write(bbox_str + "\n")  # Write bounding box coordinates to file
 
-            detection_results.append({
-                'filename': save_path.name,
-                'class_name': class_name,
-                'bbox': [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()],
-                #'timestamp': datetime.now(timezone.utc).isoformat() #time.time()
-                #'timestamp': time.time()
-                't_proc': t_proc,
-                'timestamp_send': timestamp_send
-            })
+                save_one_box(
+                    bbox,  # Keep the bbox as a tensor
+                    self.orig_img.copy(),
+                    file=save_path,
+                    BGR=True,
+                )
 
-            # result_item = {
-            #     'filename': save_path.name,
-            #     'class_name': class_name,
-            #     'bbox': [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()]
-            # }
-            
-            # d.id が None でない場合のみ、'track_id' キーを追加
-            if d.id is not None:
-                # torch.TensorからPythonのint型へ変換
-                detection_results[-1]['track_id'] = int(d.id.item()) 
-
-            if self.gps_data:
                 detection_results.append({
-                    "gps":self.gps_data
-                   } )
-                
-            if detection_results:
-                try:
-                    DATA_QUEUE.put(detection_results, block=False)
-                except queue.Full:
-                    pass
+                    'filename': save_path.name,
+                    'class_name': class_name,
+                    'bbox': [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()]
+                    #'timestamp': datetime.now(timezone.utc).isoformat() #time.time()
+                    #'timestamp': time.time()
+                })
 
+                # result_item = {
+                #     'filename': save_path.name,
+                #     'class_name': class_name,
+                #     'bbox': [bbox[0].item(), bbox[1].item(), bbox[2].item(), bbox[3].item()]
+                # }
+                
+                # d.id が None でない場合のみ、'track_id' キーを追加
+                if d.id is not None:
+                    # torch.TensorからPythonのint型へ変換
+                    detection_results[-1]['track_id'] = int(d.id.item()) 
 
                 
             
 
-    #     try:
-    #         loop = asyncio.get_running_loop()
-    #         # 如果事件循环已在运行，创建任务
-    #         asyncio.create_task(self.send_data(detection_results))
+        try:
+            loop = asyncio.get_running_loop()
+            # 如果事件循环已在运行，创建任务
+            asyncio.create_task(self.send_data(detection_results))
 
-    #     except RuntimeError:
-    #         # 如果没有事件循环，创建新的事件循环
-    #         asyncio.run(self.send_data(detection_results))
+        except RuntimeError:
+            # 如果没有事件循环，创建新的事件循环
+            asyncio.run(self.send_data(detection_results))
 
 
-    # async def send_data(self, data):
-    #     url = 'http://192.168.0.122:40000/endpoint'#40011
+    async def send_data(self, data):
+        url = 'http://192.168.0.122:40000/endpoint'#40011
 
-    #     connector = aiohttp.TCPConnector(keepalive_timeout=60)
-    #     async with aiohttp.ClientSession(connector=connector) as session:
-    #         try:
-    #             start_time = time.perf_counter()
-    #             async with session.post(url, json=data) as response:
-    #                 end_time = time.perf_counter()
-    #                 if response.status == 200:
-    #                     total_time = end_time - start_time  # Calculate total time taken for data transfer
-    #                     self.counter['times'] += 1
-    #                     self.counter['total_time'] += total_time
-    #                     print('average_time:', (self.counter['total_time'] / self.counter['times'])*1000)
+        connector = aiohttp.TCPConnector(keepalive_timeout=60)
+        async with aiohttp.ClientSession(connector=connector) as session:
+            try:
+                start_time = time.perf_counter()
+                async with session.post(url, json=data) as response:
+                    end_time = time.perf_counter()
+                    if response.status == 200:
+                        total_time = end_time - start_time  # Calculate total time taken for data transfer
+                        self.counter['times'] += 1
+                        self.counter['total_time'] += total_time
+                        print('average_time:', (self.counter['total_time'] / self.counter['times'])*1000)
 
-    #                     resp_text = await response.text()
-    #                     LOGGER.info(f"服务器响应：{resp_text}")
-    #                 else:
-    #                     LOGGER.error(f"发送数据失败，状态码：{response.status}")
-    #         except Exception as e:
-    #             LOGGER.error(f"发送数据时发生异常：{e}")
+                        resp_text = await response.text()
+                        LOGGER.info(f"服务器响应：{resp_text}")
+                    else:
+                        LOGGER.error(f"发送数据失败，状态码：{response.status}")
+            except Exception as e:
+                LOGGER.error(f"发送数据时发生异常：{e}")
 
 
 

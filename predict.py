@@ -1,41 +1,37 @@
-from time import sleep
-
-# from predict_webcram import frame
-from ultralytics import YOLO
 import time
+from ultralytics import YOLO
+from picamera2 import Picamera2
+from pathlib import Path
 
-#model = YOLO("/home/dubx/Projects/yolov11/model/best2.pt")
+
 model = YOLO("model/best2.pt")
 
+picam2 = Picamera2()
 
-source = "video/1.mp4"  #2
-imgsource = "video/test3.png"
+config = picam2.create_video_configuration(main={"format": "RGB888", "size": (640, 480)})
+picam2.configure(config)
+picam2.start()
 
-time1 = time.time()
-#results = model.predict(source, vid_stride =1, imgsz=640, conf=0.6, save=False, save_txt=True, save_crop=True)
-#time2 = time.time()
-results = model.track(
-    imgsource, 
-    imgsz=640, 
-    conf=0.05, 
-    save = True, 
-    save_txt=True, 
-    save_crop=True, 
-    classes=None,
-    # === トラッキング関連の引数 ===
-    persist=True,
-    tracker='bytetrack.yaml' # デフォルトのByteTrackトラッカー設定を使用します
-    # ==========================
-    )#, classes=2
-time2 = time.time()
+try:
+    while True:
 
-# for i in range():
-#     results = model.predict(imgsource, imgsz=640, vid_stride =2, conf=0.6, save=True, save_txt=True, save_crop=True)  # , classes=2
-#     sleep(2)
-# time2 = time.time()
+        frame = picam2.capture_array()
 
-print("total time:", time2-time1)
+        results = model.predict(
+            source=frame,
+            imgsz=640,
+            conf=0.6,
+            save=False,
+            stream=True
+        )
 
+        for result in results:
+            if len(result.boxes) > 0:
+                print(f"Detected: {len(result.boxes)} objects")
 
-# phash     215.02 s
-#kv cache
+except KeyboardInterrupt:
+    print("Interrupted by user")
+
+finally:
+    picam2.stop()
+    picam2.close()
