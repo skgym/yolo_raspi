@@ -19,8 +19,7 @@ class BaseSolution:
     """A class to manage all the Ultralytics Solutions: https://docs.ultralytics.com/solutions/."""
 
     def __init__(self, **kwargs):
-        """
-        Base initializer for all solutions.
+        """Base initializer for all solutions.
 
         Child classes should call this with necessary parameters.
         """
@@ -41,8 +40,7 @@ class BaseSolution:
         self.track_history = defaultdict(list)
 
     def extract_tracks(self, im0):
-        """
-        Apply object tracking and extract tracks.
+        """Apply object tracking and extract tracks.
 
         Args:
             im0 (ndarray): The input image or frame
@@ -61,8 +59,7 @@ class BaseSolution:
             self.boxes, self.clss, self.track_ids = [], [], []
 
     def store_tracking_history(self, track_id, box):
-        """
-        Store object tracking history.
+        """Store object tracking history.
 
         Args:
             track_id (int): The track ID of the object
@@ -81,8 +78,8 @@ class BaseSolution:
         self.l_s = LineString([(self.region[0][0], self.region[0][1]), (self.region[1][0], self.region[1][1])])
 
     def display_output(self, im0):
-        """
-        Display the results of the processing, which could involve showing frames, printing counts, or saving results.
+        """Display the results of the processing, which could involve showing frames, printing counts, or saving
+        results.
 
         Args:
             im0 (ndarray): The input image or frame

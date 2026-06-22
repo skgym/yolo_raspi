@@ -1,6 +1,6 @@
-import asyncio
 import base64
 import io
+
 import imagehash
 from PIL import Image
 
@@ -14,13 +14,10 @@ def get_phash(data):
         # 到这一步，data 应该是 bytes
     pil_image = Image.open(io.BytesIO(data))
 
-
     return str(imagehash.phash(pil_image))
 
 
 def hamming_distance(hash1, hash2):
-    """
-    比较两个 pHash 字符串的海明距离。
-    若距离小于一定阈值，则认为两张图像近似或相同。
+    """比较两个 pHash 字符串的海明距离。 若距离小于一定阈值，则认为两张图像近似或相同。.
     """
     return sum(c1 != c2 for c1, c2 in zip(hash1, hash2))
