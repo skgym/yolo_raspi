@@ -25,8 +25,7 @@ class ObjectCounter(BaseSolution):
         self.show_out = self.CFG["show_out"]
 
     def count_objects(self, track_line, box, track_id, prev_position, cls):
-        """
-        Helper function to count objects within a polygonal region.
+        """Helper function to count objects within a polygonal region.
 
         Args:
             track_line (dict): last 30 frame track record
@@ -63,8 +62,7 @@ class ObjectCounter(BaseSolution):
                 self.classwise_counts[self.names[cls]]["OUT"] += 1
 
     def store_classwise_counts(self, cls):
-        """
-        Initialize class-wise counts if not already present.
+        """Initialize class-wise counts if not already present.
 
         Args:
             cls (int): Class index for classwise count updates
@@ -73,8 +71,7 @@ class ObjectCounter(BaseSolution):
             self.classwise_counts[self.names[cls]] = {"IN": 0, "OUT": 0}
 
     def display_counts(self, im0):
-        """
-        Helper function to display object counts on the frame.
+        """Helper function to display object counts on the frame.
 
         Args:
             im0 (ndarray): The input image or frame
@@ -90,12 +87,10 @@ class ObjectCounter(BaseSolution):
             self.annotator.display_analytics(im0, labels_dict, (104, 31, 17), (255, 255, 255), 10)
 
     def count(self, im0):
-        """
-        Processes input data (frames or object tracks) and updates counts.
+        """Processes input data (frames or object tracks) and updates counts.
 
         Args:
-            im0 (ndarray): The input image that will be used for processing
-        Returns
+            im0 (ndarray): The input image that will be used for processing Returns
             im0 (ndarray): The processed image for more usage
         """
         if not self.region_initialized:
