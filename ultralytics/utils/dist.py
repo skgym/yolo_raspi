@@ -11,8 +11,7 @@ from .torch_utils import TORCH_1_9
 
 
 def find_free_network_port() -> int:
-    """
-    Finds a free port on localhost.
+    """Finds a free port on localhost.
 
     It is useful in single-node training when we don't want to connect to a real main node but have to set the
     `MASTER_PORT` environment variable.
@@ -37,7 +36,7 @@ if __name__ == "__main__":
     cfg = DEFAULT_CFG_DICT.copy()
     cfg.update(save_dir='')   # handle the extra key 'save_dir'
     trainer = {name}(cfg=cfg, overrides=overrides)
-    trainer.args.model = "{getattr(trainer.hub_session, 'model_url', trainer.args.model)}"
+    trainer.args.model = "{getattr(trainer.hub_session, "model_url", trainer.args.model)}"
     results = trainer.train()
 """
     (USER_CONFIG_DIR / "DDP").mkdir(exist_ok=True)

@@ -12,6 +12,7 @@ from .streamlit_inference import inference
 
 __all__ = (
     "AIGym",
+    "Analytics",
     "DistanceCalculation",
     "Heatmap",
     "ObjectCounter",
@@ -19,6 +20,5 @@ __all__ = (
     "ParkingPtsSelection",
     "QueueManager",
     "SpeedEstimator",
-    "Analytics",
     "inference",
 )
