@@ -14,8 +14,7 @@ class SpeedEstimator:
     """A class to estimate the speed of objects in a real-time video stream based on their tracks."""
 
     def __init__(self, names, reg_pts=None, view_img=False, line_thickness=2, spdl_dist_thresh=10):
-        """
-        Initializes the SpeedEstimator with the given parameters.
+        """Initializes the SpeedEstimator with the given parameters.
 
         Args:
             names (dict): Dictionary of class names.
@@ -44,8 +43,7 @@ class SpeedEstimator:
         self.env_check = check_imshow(warn=True)
 
     def estimate_speed(self, im0, tracks):
-        """
-        Estimates the speed of objects based on tracking data.
+        """Estimates the speed of objects based on tracking data.
 
         Args:
             im0 (ndarray): Image.
