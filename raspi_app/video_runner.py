@@ -22,7 +22,7 @@ def parse_args():
     # 動画ファイルで送信処理を試すための実行オプションを受け取る。
     parser = argparse.ArgumentParser()
     parser.add_argument("--video", required=True, help="input video path")
-    parser.add_argument("--model", default="yolo11n.pt", help="YOLO model path")
+    parser.add_argument("--model", default="best2.pt", help="YOLO model path")
     parser.add_argument("--no-send", action="store_true", help="print payload only")
     parser.add_argument("--max-frames", type=int, default=0, help="0 means unlimited")
     return parser.parse_args()
