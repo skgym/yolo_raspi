@@ -22,8 +22,7 @@ class Heatmap(ObjectCounter):
         self.colormap = cv2.COLORMAP_PARULA if self.CFG["colormap"] is None else self.CFG["colormap"]
 
     def heatmap_effect(self, box):
-        """
-        Efficient calculation of heatmap area and effect location for applying colormap.
+        """Efficient calculation of heatmap area and effect location for applying colormap.
 
         Args:
             box (list): Bounding Box coordinates data [x0, y0, x1, y1]
@@ -44,11 +43,11 @@ class Heatmap(ObjectCounter):
         self.heatmap[y0:y1, x0:x1][within_radius] += 2
 
     def generate_heatmap(self, im0):
-        """
-        Generate heatmap for each frame using Ultralytics.
+        """Generate heatmap for each frame using Ultralytics.
 
         Args:
             im0 (ndarray): Input image array for processing
+
         Returns:
             im0 (ndarray): Processed image for further usage
         """
