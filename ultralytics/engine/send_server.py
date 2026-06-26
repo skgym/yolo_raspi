@@ -1,10 +1,12 @@
 import argparse
 import asyncio
 import base64
-import os
 import copy
+import os
+
 import aiohttp
 from llava.conversation import conv_qwen
+
 
 async def send_request(url, data, delay=0):
     await asyncio.sleep(delay)
@@ -13,10 +15,12 @@ async def send_request(url, data, delay=0):
             output = await resp.json()
     return output
 
+
 def encode_image_to_base64(image_path):
     """Read an image file and encode it to base64."""
     with open(image_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode('utf-8')
+        return base64.b64encode(image_file.read()).decode("utf-8")
+
 
 async def process_image(url, image_path):
     prompt = "<image>\nPlease generate caption towards this image."
@@ -40,15 +44,18 @@ async def process_image(url, image_path):
                 "frequency_penalty": 2,
                 "stop": "<|im_end|>",
             },
-        }
+        },
     )
-    return image_path, response['text']  # Return the filename and the response text
+    return image_path, response["text"]  # Return the filename and the response text
 
 
 async def test_concurrent(args):
     url = f"{args.host}:{args.port}"
-    image_paths = [os.path.join(args.image_dir, file) for file in os.listdir(args.image_dir) if
-                   file.lower().endswith(('.png', '.jpg', '.jpeg'))]
+    image_paths = [
+        os.path.join(args.image_dir, file)
+        for file in os.listdir(args.image_dir)
+        if file.lower().endswith((".png", ".jpg", ".jpeg"))
+    ]
 
     # Create tasks for each image
     tasks = [process_image(url, image_path) for image_path in image_paths]
@@ -59,14 +66,15 @@ async def test_concurrent(args):
         print(f"Filename: {filename} - Caption: {text}")
 
 
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", type=str, default="http://127.0.0.1")
     parser.add_argument("--port", type=int, default=30000)
-    parser.add_argument("--image_dir", type=str, default='/home/dubx/Projects/LLaVA-NeXT/images/imgs/1')  # /home/dubx/Projects/LLaVA-NeXT/images/imgs
+    parser.add_argument(
+        "--image_dir", type=str, default="/home/dubx/Projects/LLaVA-NeXT/images/imgs/1"
+    )  # /home/dubx/Projects/LLaVA-NeXT/images/imgs
     args = parser.parse_args()
     asyncio.run(test_concurrent(args))
 
 # pass  doesn't work
-#/home/dubx/Projects/Dataset/ROAD/vaild/images
+# /home/dubx/Projects/Dataset/ROAD/valid/images

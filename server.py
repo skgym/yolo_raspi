@@ -26,19 +26,20 @@
 # if __name__ == "__main__":
 #     # 特定のポートでサーバーを実行する
 #     app.run(host='0.0.0.0', port=40000)
-from flask import Flask, request, jsonify
 import os
+
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
 
-@app.route('/upload_video', methods=['POST'])
+@app.route("/upload_video", methods=["POST"])
 def upload_video():
     # リクエストにファイルが含まれているか確認する
-    if 'video' not in request.files:
+    if "video" not in request.files:
         return jsonify({"status": "error", "message": "No video file in request"}), 400
 
-    video_file = request.files['video']
+    video_file = request.files["video"]
 
     # 保存パスを定義する
     save_path = os.path.join("uploads", video_file.filename)
@@ -52,9 +53,9 @@ def upload_video():
 
 if __name__ == "__main__":
     # サーバーを起動する
-    app.run(host='0.0.0.0', port=40000)
+    app.run(host="0.0.0.0", port=40000)
 
 if __name__ == "__main__":
-    server_url = 'http://192.168.0.237:40003/upload_video'
-    file_path = 'video/1.mp4'  # 動画ファイルのパス
+    server_url = "http://192.168.0.237:40003/upload_video"
+    file_path = "video/1.mp4"  # 動画ファイルのパス
     send_video(file_path, server_url)
