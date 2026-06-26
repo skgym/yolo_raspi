@@ -1,12 +1,14 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+from __future__ import annotations
+
 import contextlib
 import shutil
 import subprocess
 import sys
 from pathlib import Path
 from types import SimpleNamespace
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 from ultralytics.utils import (
     ASSETS,
@@ -59,7 +61,7 @@ MODELS = {TASK2MODEL[task] for task in TASKS}
 
 ARGV = sys.argv or ["", ""]  # sometimes sys.argv = []
 CLI_HELP_MSG = f"""
-    Arguments received: {str(['yolo'] + ARGV[1:])}. Ultralytics 'yolo' commands use the following syntax:
+    Arguments received: {["yolo", *ARGV[1:]]!s}. Ultralytics 'yolo' commands use the following syntax:
 
         yolo TASK MODE ARGS
 
@@ -188,12 +190,11 @@ CFG_BOOL_KEYS = {  # boolean-only arguments
 
 
 def cfg2dict(cfg):
-    """
-    Converts a configuration object to a dictionary.
+    """Converts a configuration object to a dictionary.
 
     Args:
-        cfg (str | Path | Dict | SimpleNamespace): Configuration object to be converted. Can be a file path,
-            a string, a dictionary, or a SimpleNamespace object.
+        cfg (str | Path | Dict | SimpleNamespace): Configuration object to be converted. Can be a file path, a string, a
+            dictionary, or a SimpleNamespace object.
 
     Returns:
         (Dict): Configuration object in dictionary format.
@@ -222,9 +223,8 @@ def cfg2dict(cfg):
     return cfg
 
 
-def get_cfg(cfg: Union[str, Path, Dict, SimpleNamespace] = DEFAULT_CFG_DICT, overrides: Dict = None):
-    """
-    Load and merge configuration data from a file or dictionary, with optional overrides.
+def get_cfg(cfg: str | Path | dict | SimpleNamespace = DEFAULT_CFG_DICT, overrides: dict | None = None):
+    """Load and merge configuration data from a file or dictionary, with optional overrides.
 
     Args:
         cfg (str | Path | Dict | SimpleNamespace): Configuration data source. Can be a file path, dictionary, or
@@ -271,12 +271,11 @@ def get_cfg(cfg: Union[str, Path, Dict, SimpleNamespace] = DEFAULT_CFG_DICT, ove
 
 
 def check_cfg(cfg, hard=True):
-    """
-    Checks configuration argument types and values for the Ultralytics library.
+    """Checks configuration argument types and values for the Ultralytics library.
 
-    This function validates the types and values of configuration arguments, ensuring correctness and converting
-    them if necessary. It checks for specific key types defined in global variables such as CFG_FLOAT_KEYS,
-    CFG_FRACTION_KEYS, CFG_INT_KEYS, and CFG_BOOL_KEYS.
+    This function validates the types and values of configuration arguments, ensuring correctness and converting them if
+    necessary. It checks for specific key types defined in global variables such as CFG_FLOAT_KEYS, CFG_FRACTION_KEYS,
+    CFG_INT_KEYS, and CFG_BOOL_KEYS.
 
     Args:
         cfg (Dict): Configuration dictionary to validate.
@@ -316,11 +315,11 @@ def check_cfg(cfg, hard=True):
                         )
                     cfg[k] = v = float(v)
                 if not (0.0 <= v <= 1.0):
-                    raise ValueError(f"'{k}={v}' is an invalid value. " f"Valid '{k}' values are between 0.0 and 1.0.")
+                    raise ValueError(f"'{k}={v}' is an invalid value. Valid '{k}' values are between 0.0 and 1.0.")
             elif k in CFG_INT_KEYS and not isinstance(v, int):
                 if hard:
                     raise TypeError(
-                        f"'{k}={v}' is of invalid type {type(v).__name__}. " f"'{k}' must be an int (i.e. '{k}=8')"
+                        f"'{k}={v}' is of invalid type {type(v).__name__}. '{k}' must be an int (i.e. '{k}=8')"
                     )
                 cfg[k] = int(v)
             elif k in CFG_BOOL_KEYS and not isinstance(v, bool):
@@ -333,14 +332,13 @@ def check_cfg(cfg, hard=True):
 
 
 def get_save_dir(args, name=None):
-    """
-    Returns the directory path for saving outputs, derived from arguments or default settings.
+    """Returns the directory path for saving outputs, derived from arguments or default settings.
 
     Args:
-        args (SimpleNamespace): Namespace object containing configurations such as 'project', 'name', 'task',
-            'mode', and 'save_dir'.
-        name (str | None): Optional name for the output directory. If not provided, it defaults to 'args.name'
-            or the 'args.mode'.
+        args (SimpleNamespace): Namespace object containing configurations such as 'project', 'name', 'task', 'mode',
+            and 'save_dir'.
+        name (str | None): Optional name for the output directory. If not provided, it defaults to 'args.name' or the
+            'args.mode'.
 
     Returns:
         (Path): Directory path where outputs should be saved.
@@ -365,8 +363,7 @@ def get_save_dir(args, name=None):
 
 
 def _handle_deprecation(custom):
-    """
-    Handles deprecated configuration keys by mapping them to current equivalents with deprecation warnings.
+    """Handles deprecated configuration keys by mapping them to current equivalents with deprecation warnings.
 
     Args:
         custom (Dict): Configuration dictionary potentially containing deprecated keys.
@@ -399,9 +396,8 @@ def _handle_deprecation(custom):
     return custom
 
 
-def check_dict_alignment(base: Dict, custom: Dict, e=None):
-    """
-    Checks alignment between custom and base configuration dictionaries, handling deprecated keys and providing error
+def check_dict_alignment(base: dict, custom: dict, e=None):
+    """Checks alignment between custom and base configuration dictionaries, handling deprecated keys and providing error
     messages for mismatched keys.
 
     Args:
@@ -440,12 +436,9 @@ def check_dict_alignment(base: Dict, custom: Dict, e=None):
         raise SyntaxError(string + CLI_HELP_MSG) from e
 
 
-def merge_equals_args(args: List[str]) -> List[str]:
-    """
-    Merges arguments around isolated '=' in a list of strings, handling three cases:
-    1. ['arg', '=', 'val'] becomes ['arg=val'],
-    2. ['arg=', 'val'] becomes ['arg=val'],
-    3. ['arg', '=val'] becomes ['arg=val'].
+def merge_equals_args(args: list[str]) -> list[str]:
+    """Merges arguments around isolated '=' in a list of strings, handling three cases: 1. ['arg', '=', 'val'] becomes
+    ['arg=val'], 2. ['arg=', 'val'] becomes ['arg=val'], 3. ['arg', '=val'] becomes ['arg=val'].
 
     Args:
         args (List[str]): A list of strings where each element represents an argument.
@@ -473,16 +466,15 @@ def merge_equals_args(args: List[str]) -> List[str]:
     return new_args
 
 
-def handle_yolo_hub(args: List[str]) -> None:
-    """
-    Handles Ultralytics HUB command-line interface (CLI) commands for authentication.
+def handle_yolo_hub(args: list[str]) -> None:
+    """Handles Ultralytics HUB command-line interface (CLI) commands for authentication.
 
     This function processes Ultralytics HUB CLI commands such as login and logout. It should be called when executing a
     script with arguments related to HUB authentication.
 
     Args:
-        args (List[str]): A list of command line arguments. The first argument should be either 'login'
-            or 'logout'. For 'login', an optional second argument can be the API key.
+        args (List[str]): A list of command line arguments. The first argument should be either 'login' or 'logout'. For
+            'login', an optional second argument can be the API key.
 
     Examples:
         ```bash
@@ -505,9 +497,8 @@ def handle_yolo_hub(args: List[str]) -> None:
         hub.logout()
 
 
-def handle_yolo_settings(args: List[str]) -> None:
-    """
-    Handles YOLO settings command-line interface (CLI) commands.
+def handle_yolo_settings(args: list[str]) -> None:
+    """Handles YOLO settings command-line interface (CLI) commands.
 
     This function processes YOLO settings CLI commands such as reset and updating individual settings. It should be
     called when executing a script with arguments related to YOLO settings management.
@@ -546,9 +537,8 @@ def handle_yolo_settings(args: List[str]) -> None:
         LOGGER.warning(f"WARNING ⚠️ settings error: '{e}'. Please see {url} for help.")
 
 
-def handle_explorer(args: List[str]):
-    """
-    Launches a graphical user interface that provides tools for interacting with and analyzing datasets using the
+def handle_explorer(args: list[str]):
+    """Launches a graphical user interface that provides tools for interacting with and analyzing datasets using the
     Ultralytics Explorer API. It checks for the required 'streamlit' package and informs the user that the Explorer
     dashboard is loading.
 
@@ -576,8 +566,7 @@ def handle_explorer(args: List[str]):
 
 
 def handle_streamlit_inference():
-    """
-    Open the Ultralytics Live Inference Streamlit app for real-time object detection.
+    """Open the Ultralytics Live Inference Streamlit app for real-time object detection.
 
     This function initializes and runs a Streamlit application designed for performing live object detection using
     Ultralytics models. It checks for the required Streamlit package and launches the app.
@@ -596,8 +585,7 @@ def handle_streamlit_inference():
 
 
 def parse_key_value_pair(pair: str = "key=value"):
-    """
-    Parses a key-value pair string into separate key and value components.
+    """Parses a key-value pair string into separate key and value components.
 
     Args:
         pair (str): A string containing a key-value pair in the format "key=value".
@@ -631,8 +619,7 @@ def parse_key_value_pair(pair: str = "key=value"):
 
 
 def smart_value(v):
-    """
-    Converts a string representation of a value to its appropriate Python type.
+    """Converts a string representation of a value to its appropriate Python type.
 
     This function attempts to convert a given string into a Python object of the most appropriate type. It handles
     conversions to None, bool, int, float, and other types that can be evaluated safely.
@@ -641,8 +628,8 @@ def smart_value(v):
         v (str): The string representation of the value to be converted.
 
     Returns:
-        (Any): The converted value. The type can be None, bool, int, float, or the original string if no conversion
-            is applicable.
+        (Any): The converted value. The type can be None, bool, int, float, or the original string if no conversion is
+            applicable.
 
     Examples:
         >>> smart_value("42")
@@ -675,11 +662,10 @@ def smart_value(v):
 
 
 def entrypoint(debug=""):
-    """
-    Ultralytics entrypoint function for parsing and executing command-line arguments.
+    """Ultralytics entrypoint function for parsing and executing command-line arguments.
 
-    This function serves as the main entry point for the Ultralytics CLI, parsing command-line arguments and
-    executing the corresponding tasks such as training, validation, prediction, exporting models, and more.
+    This function serves as the main entry point for the Ultralytics CLI, parsing command-line arguments and executing
+    the corresponding tasks such as training, validation, prediction, exporting models, and more.
 
     Args:
         debug (str): Space-separated string of command-line arguments for debugging purposes.
@@ -840,12 +826,11 @@ def entrypoint(debug=""):
 
 # Special modes --------------------------------------------------------------------------------------------------------
 def copy_default_cfg():
-    """
-    Copies the default configuration file and creates a new one with '_copy' appended to its name.
+    """Copies the default configuration file and creates a new one with '_copy' appended to its name.
 
-    This function duplicates the existing default configuration file (DEFAULT_CFG_PATH) and saves it
-    with '_copy' appended to its name in the current working directory. It provides a convenient way
-    to create a custom configuration file based on the default settings.
+    This function duplicates the existing default configuration file (DEFAULT_CFG_PATH) and saves it with '_copy'
+    appended to its name in the current working directory. It provides a convenient way to create a custom configuration
+    file based on the default settings.
 
     Examples:
         >>> copy_default_cfg()
