@@ -1,7 +1,6 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
 import getpass
-from typing import List
 
 import cv2
 import numpy as np
@@ -20,11 +19,11 @@ def get_table_schema(vector_size):
 
     class Schema(LanceModel):
         im_file: str
-        labels: List[str]
-        cls: List[int]
-        bboxes: List[List[float]]
-        masks: List[List[List[int]]]
-        keypoints: List[List[List[float]]]
+        labels: list[str]
+        cls: list[int]
+        bboxes: list[list[float]]
+        masks: list[list[list[int]]]
+        keypoints: list[list[list[float]]]
         vector: Vector(vector_size)
 
     return Schema
@@ -38,7 +37,7 @@ def get_sim_index_schema():
         idx: int
         im_file: str
         count: int
-        sim_im_files: List[str]
+        sim_im_files: list[str]
 
     return Schema
 
@@ -56,8 +55,7 @@ def sanitize_batch(batch, dataset_info):
 
 
 def plot_query_result(similar_set, plot_labels=True):
-    """
-    Plot images from the similar set.
+    """Plot images from the similar set.
 
     Args:
         similar_set (list): Pyarrow or pandas object containing the similar data points
