@@ -152,8 +152,7 @@ class ParkingManagement:
         occupied_region_color=(0, 0, 255),  # occupied region color
         available_region_color=(0, 255, 0),  # available region color
     ):
-        """
-        Initializes the parking management system with a YOLOv8 model and visualization settings.
+        """Initializes the parking management system with a YOLOv8 model and visualization settings.
 
         Args:
             model (str): Path to the YOLOv8 model.
@@ -178,8 +177,7 @@ class ParkingManagement:
         self.env_check = check_imshow(warn=True)  # check if environment supports imshow
 
     def process_data(self, im0):
-        """
-        Process the model data for parking lot management.
+        """Process the model data for parking lot management.
 
         Args:
             im0 (ndarray): inference image
@@ -228,8 +226,7 @@ class ParkingManagement:
         return im0
 
     def display_frames(self, im0):
-        """
-        Display frame.
+        """Display frame.
 
         Args:
             im0 (ndarray): inference image
