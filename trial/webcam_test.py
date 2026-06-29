@@ -11,16 +11,12 @@ picam2.start()
 
 try:
     while True:
-
         frame = picam2.capture_array()
         frame_bgr = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
-        cv2.imshow("Rasberry Pi Camera", frame_bgr)
-        if cv2.waitkey(1) == ord('q'):
+        cv2.imshow("Raspberry Pi Camera", frame_bgr)
+        if cv2.waitkey(1) == ord("q"):
             break
 
 finally:
     picam2.stop()
     cv2.destroyALLWindows()
-
-
-

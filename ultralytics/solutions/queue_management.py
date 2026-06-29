@@ -23,8 +23,7 @@ class QueueManager:
         view_img=False,
         draw_tracks=False,
     ):
-        """
-        Initializes the QueueManager with specified parameters for tracking and counting objects.
+        """Initializes the QueueManager with specified parameters for tracking and counting objects.
 
         Args:
             names (dict): A dictionary mapping class IDs to class names.
@@ -94,7 +93,7 @@ class QueueManager:
                         self.counts += 1
 
         # Display queue counts
-        label = f"Queue Counts : {str(self.counts)}"
+        label = f"Queue Counts : {self.counts!s}"
         if label is not None:
             annotator.queue_counts_display(
                 label,
@@ -111,8 +110,7 @@ class QueueManager:
                 return
 
     def process_queue(self, im0, tracks):
-        """
-        Main function to start the queue management process.
+        """Main function to start the queue management process.
 
         Args:
             im0 (ndarray): Current frame from the video stream.
