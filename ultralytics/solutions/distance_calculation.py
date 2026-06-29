@@ -19,8 +19,7 @@ class DistanceCalculation:
         line_color=(255, 0, 255),
         centroid_color=(104, 31, 17),
     ):
-        """
-        Initializes the DistanceCalculation class with the given parameters.
+        """Initializes the DistanceCalculation class with the given parameters.
 
         Args:
             names (dict): Dictionary of classes names.
@@ -54,8 +53,7 @@ class DistanceCalculation:
         self.window_name = "Ultralytics Solutions"
 
     def mouse_event_for_distance(self, event, x, y, flags, param):
-        """
-        Handles mouse events to select regions in a real-time video stream.
+        """Handles mouse events to select regions in a real-time video stream.
 
         Args:
             event (int): Type of mouse event (e.g., cv2.EVENT_MOUSEMOVE, cv2.EVENT_LBUTTONDOWN, etc.).
@@ -76,8 +74,7 @@ class DistanceCalculation:
             self.left_mouse_count = 0
 
     def start_process(self, im0, tracks):
-        """
-        Processes the video frame and calculates the distance between two bounding boxes.
+        """Processes the video frame and calculates the distance between two bounding boxes.
 
         Args:
             im0 (ndarray): The image frame.
