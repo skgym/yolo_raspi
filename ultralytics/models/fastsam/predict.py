@@ -11,9 +11,8 @@ from .utils import adjust_bboxes_to_image_border
 
 
 class FastSAMPredictor(SegmentationPredictor):
-    """
-    FastSAMPredictor is specialized for fast SAM (Segment Anything Model) segmentation prediction tasks in Ultralytics
-    YOLO framework.
+    """FastSAMPredictor is specialized for fast SAM (Segment Anything Model) segmentation prediction tasks in
+    Ultralytics YOLO framework.
 
     This class extends the SegmentationPredictor, customizing the prediction pipeline specifically for fast SAM. It
     adjusts post-processing steps to incorporate mask prediction and non-max suppression while optimizing for single-
@@ -44,8 +43,7 @@ class FastSAMPredictor(SegmentationPredictor):
         return self.prompt(results, bboxes=bboxes, points=points, labels=labels, texts=texts)
 
     def prompt(self, results, bboxes=None, points=None, labels=None, texts=None):
-        """
-        Internal function for image segmentation inference based on cues like bounding boxes, points, and masks.
+        """Internal function for image segmentation inference based on cues like bounding boxes, points, and masks.
         Leverages SAM's specialized architecture for prompt-based, real-time segmentation.
 
         Args:
@@ -84,9 +82,9 @@ class FastSAMPredictor(SegmentationPredictor):
                 if labels is None:
                     labels = torch.ones(points.shape[0])
                 labels = torch.as_tensor(labels, dtype=torch.int32, device=self.device)
-                assert len(labels) == len(
-                    points
-                ), f"Excepted `labels` got same size as `point`, but got {len(labels)} and {len(points)}"
+                assert len(labels) == len(points), (
+                    f"Excepted `labels` got same size as `point`, but got {len(labels)} and {len(points)}"
+                )
                 point_idx = (
                     torch.ones(len(result), dtype=torch.bool, device=self.device)
                     if labels.sum() == 0  # all negative points
@@ -116,11 +114,11 @@ class FastSAMPredictor(SegmentationPredictor):
         return prompt_results
 
     def _clip_inference(self, images, texts):
-        """
-        CLIP Inference process.
+        """CLIP Inference process.
 
         Args:
-            images (List[PIL.Image]): A list of source images and each of them should be PIL.Image type with RGB channel order.
+            images (List[PIL.Image]): A list of source images and each of them should be PIL.Image type with RGB channel
+                order.
             texts (List[str]): A list of prompt texts and each of them should be string object.
 
         Returns:
