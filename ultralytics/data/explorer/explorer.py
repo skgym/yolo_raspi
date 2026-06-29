@@ -1,8 +1,10 @@
 # Ultralytics YOLO 🚀, AGPL-3.0 license
 
+from __future__ import annotations
+
 from io import BytesIO
 from pathlib import Path
-from typing import Any, List, Tuple, Union
+from typing import Any
 
 import cv2
 import numpy as np
@@ -23,11 +25,11 @@ from .utils import get_sim_index_schema, get_table_schema, plot_query_result, pr
 class ExplorerDataset(YOLODataset):
     """Extends YOLODataset for advanced data exploration and manipulation in model training workflows."""
 
-    def __init__(self, *args, data: dict = None, **kwargs) -> None:
+    def __init__(self, *args, data: dict | None = None, **kwargs) -> None:
         """Initializes the ExplorerDataset with the provided data arguments, extending the YOLODataset class."""
         super().__init__(*args, data=data, **kwargs)
 
-    def load_image(self, i: int) -> Union[Tuple[np.ndarray, Tuple[int, int], Tuple[int, int]], Tuple[None, None, None]]:
+    def load_image(self, i: int) -> tuple[np.ndarray, tuple[int, int], tuple[int, int]] | tuple[None, None, None]:
         """Loads 1 image from dataset index 'i' without any resize ops."""
         im, f, fn = self.ims[i], self.im_files[i], self.npy_files[i]
         if im is None:  # not cached in RAM
@@ -60,7 +62,7 @@ class Explorer:
 
     def __init__(
         self,
-        data: Union[str, Path] = "coco128.yaml",
+        data: str | Path = "coco128.yaml",
         model: str = "yolov8n.pt",
         uri: str = USER_CONFIG_DIR / "explorer",
     ) -> None:
@@ -82,15 +84,14 @@ class Explorer:
         self.progress = 0
 
     def create_embeddings_table(self, force: bool = False, split: str = "train") -> None:
-        """
-        Create LanceDB table containing the embeddings of the images in the dataset. The table will be reused if it
+        """Create LanceDB table containing the embeddings of the images in the dataset. The table will be reused if it
         already exists. Pass force=True to overwrite the existing table.
 
         Args:
             force (bool): Whether to overwrite the existing table or not. Defaults to False.
             split (str): Split of the dataset to use. Defaults to 'train'.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -133,7 +134,7 @@ class Explorer:
 
         self.table = table
 
-    def _yield_batches(self, dataset: ExplorerDataset, data_info: dict, model: YOLO, exclude_keys: List[str]):
+    def _yield_batches(self, dataset: ExplorerDataset, data_info: dict, model: YOLO, exclude_keys: list[str]):
         """Generates batches of data for embedding, excluding specified keys."""
         for i in tqdm(range(len(dataset))):
             self.progress = float(i + 1) / len(dataset)
@@ -145,10 +146,9 @@ class Explorer:
             yield [batch]
 
     def query(
-        self, imgs: Union[str, np.ndarray, List[str], List[np.ndarray]] = None, limit: int = 25
+        self, imgs: str | np.ndarray | list[str] | list[np.ndarray] = None, limit: int = 25
     ) -> Any:  # pyarrow.Table
-        """
-        Query the table for similar images. Accepts a single image or a list of images.
+        """Query the table for similar images. Accepts a single image or a list of images.
 
         Args:
             imgs (str or list): Path to the image or a list of paths to the images.
@@ -159,7 +159,7 @@ class Explorer:
                 - pandas dataframe: `result.to_pandas()`
                 - dict of lists: `result.to_pydict()`
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -176,11 +176,8 @@ class Explorer:
         embeds = torch.mean(torch.stack(embeds), 0).cpu().numpy() if len(embeds) > 1 else embeds[0].cpu().numpy()
         return self.table.search(embeds).limit(limit).to_arrow()
 
-    def sql_query(
-        self, query: str, return_type: str = "pandas"
-    ) -> Union[Any, None]:  # pandas.DataFrame or pyarrow.Table
-        """
-        Run a SQL-Like query on the table. Utilizes LanceDB predicate pushdown.
+    def sql_query(self, query: str, return_type: str = "pandas") -> Any | None:  # pandas.DataFrame or pyarrow.Table
+        """Run a SQL-Like query on the table. Utilizes LanceDB predicate pushdown.
 
         Args:
             query (str): SQL query to run.
@@ -189,7 +186,7 @@ class Explorer:
         Returns:
             (pyarrow.Table): An arrow table containing the results.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -224,8 +221,7 @@ class Explorer:
             return rs.df()
 
     def plot_sql_query(self, query: str, labels: bool = True) -> Image.Image:
-        """
-        Plot the results of a SQL-Like query on the table.
+        """Plot the results of a SQL-Like query on the table.
 
         Args:
             query (str): SQL query to run.
@@ -234,7 +230,7 @@ class Explorer:
         Returns:
             (PIL.Image): Image containing the plot.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -251,13 +247,12 @@ class Explorer:
 
     def get_similar(
         self,
-        img: Union[str, np.ndarray, List[str], List[np.ndarray]] = None,
-        idx: Union[int, List[int]] = None,
+        img: str | np.ndarray | list[str] | list[np.ndarray] = None,
+        idx: int | list[int] | None = None,
         limit: int = 25,
         return_type: str = "pandas",
     ) -> Any:  # pandas.DataFrame or pyarrow.Table
-        """
-        Query the table for similar images. Accepts a single image or a list of images.
+        """Query the table for similar images. Accepts a single image or a list of images.
 
         Args:
             img (str or list): Path to the image or a list of paths to the images.
@@ -268,7 +263,7 @@ class Explorer:
         Returns:
             (pandas.DataFrame): A dataframe containing the results.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -286,13 +281,12 @@ class Explorer:
 
     def plot_similar(
         self,
-        img: Union[str, np.ndarray, List[str], List[np.ndarray]] = None,
-        idx: Union[int, List[int]] = None,
+        img: str | np.ndarray | list[str] | list[np.ndarray] = None,
+        idx: int | list[int] | None = None,
         limit: int = 25,
         labels: bool = True,
     ) -> Image.Image:
-        """
-        Plot the similar images. Accepts images or indexes.
+        """Plot the similar images. Accepts images or indexes.
 
         Args:
             img (str or list): Path to the image or a list of paths to the images.
@@ -303,7 +297,7 @@ class Explorer:
         Returns:
             (PIL.Image): Image containing the plot.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -317,10 +311,11 @@ class Explorer:
         img = plot_query_result(similar, plot_labels=labels)
         return Image.fromarray(img)
 
-    def similarity_index(self, max_dist: float = 0.2, top_k: float = None, force: bool = False) -> Any:  # pd.DataFrame
-        """
-        Calculate the similarity index of all the images in the table. Here, the index will contain the data points that
-        are max_dist or closer to the image in the embedding space at a given index.
+    def similarity_index(
+        self, max_dist: float = 0.2, top_k: float | None = None, force: bool = False
+    ) -> Any:  # pd.DataFrame
+        """Calculate the similarity index of all the images in the table. Here, the index will contain the data points
+        that are max_dist or closer to the image in the embedding space at a given index.
 
         Args:
             max_dist (float): maximum L2 distance between the embeddings to consider. Defaults to 0.2.
@@ -329,10 +324,10 @@ class Explorer:
             force (bool): Whether to overwrite the existing similarity index or not. Defaults to True.
 
         Returns:
-            (pandas.DataFrame): A dataframe containing the similarity index. Each row corresponds to an image,
-                and columns include indices of similar images and their respective distances.
+            (pandas.DataFrame): A dataframe containing the similarity index. Each row corresponds to an image, and
+                columns include indices of similar images and their respective distances.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -376,21 +371,20 @@ class Explorer:
         self.sim_index = sim_table
         return sim_table.to_pandas()
 
-    def plot_similarity_index(self, max_dist: float = 0.2, top_k: float = None, force: bool = False) -> Image:
-        """
-        Plot the similarity index of all the images in the table. Here, the index will contain the data points that are
-        max_dist or closer to the image in the embedding space at a given index.
+    def plot_similarity_index(self, max_dist: float = 0.2, top_k: float | None = None, force: bool = False) -> Image:
+        """Plot the similarity index of all the images in the table. Here, the index will contain the data points that
+        are max_dist or closer to the image in the embedding space at a given index.
 
         Args:
             max_dist (float): maximum L2 distance between the embeddings to consider. Defaults to 0.2.
-            top_k (float): Percentage of closest data points to consider when counting. Used to apply limit when
-                running vector search. Defaults to 0.01.
+            top_k (float): Percentage of closest data points to consider when counting. Used to apply limit when running
+                vector search. Defaults to 0.01.
             force (bool): Whether to overwrite the existing similarity index or not. Defaults to True.
 
         Returns:
             (PIL.Image): Image containing the plot.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
@@ -421,8 +415,8 @@ class Explorer:
         return Image.fromarray(np.array(Image.open(buffer)))
 
     def _check_imgs_or_idxs(
-        self, img: Union[str, np.ndarray, List[str], List[np.ndarray], None], idx: Union[None, int, List[int]]
-    ) -> List[np.ndarray]:
+        self, img: str | np.ndarray | list[str] | list[np.ndarray] | None, idx: None | int | list[int]
+    ) -> list[np.ndarray]:
         """Determines whether to fetch images or indexes based on provided arguments and returns image paths."""
         if img is None and idx is None:
             raise ValueError("Either img or idx must be provided.")
@@ -435,8 +429,7 @@ class Explorer:
         return img if isinstance(img, list) else [img]
 
     def ask_ai(self, query):
-        """
-        Ask AI a question.
+        """Ask AI a question.
 
         Args:
             query (str): Question to ask.
@@ -444,7 +437,7 @@ class Explorer:
         Returns:
             (pandas.DataFrame): A dataframe containing filtered results to the SQL query.
 
-        Example:
+        Examples:
             ```python
             exp = Explorer()
             exp.create_embeddings_table()
