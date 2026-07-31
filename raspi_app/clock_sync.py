@@ -1,3 +1,5 @@
+"""Raspberry PiとIsaac Sim側PCの時計のずれを簡易的に補正する。"""
+
 import time
 import requests
 
@@ -6,6 +8,7 @@ class ClockSynchronizer:
     """サーバー時刻との差分を推定し、送信時刻を補正するクラス。"""
 
     def __init__(self, time_url, samples=5, timeout=2.0):
+        """時刻API、試行回数、通信タイムアウトを設定する。"""
         self.time_url = time_url
         self.samples = samples
         self.timeout = timeout
@@ -13,6 +16,7 @@ class ClockSynchronizer:
         self.time_offset = 0.0
 
     def synchronize(self):
+        """複数回のHTTP応答からサーバーとの時刻差を推定する。"""
         offsets = []
 
         for _ in range(self.samples):
@@ -40,5 +44,11 @@ class ClockSynchronizer:
         return self.time_offset
 
     def now(self):
+        """推定した時刻差を反映した現在時刻を秒単位で返す。"""
         # アプリ内ではこのメソッドを使い、補正済みの現在時刻を取得する。
         return time.time() + self.time_offset
+
+    def now_ms(self):
+        """推定した時刻差を反映した現在時刻を整数ミリ秒で返す。"""
+        # JSON とログで扱いやすいよう、補正済み時刻を整数のミリ秒にする。
+        return int(round(self.now() * 1000))

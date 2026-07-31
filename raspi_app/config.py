@@ -1,3 +1,5 @@
+"""Isaac Sim側サーバーへの接続と送信キューに関する共通設定。"""
+
 # Raspberry Pi から接続するサーバーの時刻同期 API と結果送信 API。
 SERVER_HOST = "172.16.3.128"
 SERVER_PORT = 40000
