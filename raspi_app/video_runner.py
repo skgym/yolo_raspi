@@ -5,14 +5,7 @@ import json
 
 from ultralytics import YOLO
 
-from raspi_app.config import (
-    CLOCK_SYNC_SAMPLES,
-    ENDPOINT_URL,
-    QUEUE_SIZE,
-    SEND_TIMEOUT,
-    TIME_URL,
-)
-from raspi_app.clock_sync import ClockSynchronizer
+from raspi_app.config import ENDPOINT_URL, QUEUE_SIZE, SEND_TIMEOUT
 from raspi_app.gps_reader import GpsReader
 from raspi_app.payload_builder import DetectionPayloadBuilder
 from raspi_app.result_sender import BackgroundResultSender, build_isaac_payload
@@ -40,16 +33,9 @@ def main():
     # 指定された動画を YOLO に入力し、Raspberry Pi 実機のカメラなしで挙動確認する。
     model = YOLO(args.model)
 
-    # 実機実行時と同じ payload 形式になるよう、時刻同期と GPS 読み取り部品を使う。
-    clock = ClockSynchronizer(
-        time_url=TIME_URL,
-        samples=CLOCK_SYNC_SAMPLES,
-        timeout=SEND_TIMEOUT,
-    )
-    clock.synchronize()
-
+    # 時刻はOSのUnix時刻を使い、PCとの同期はアプリ外のNTPに任せる。
     gps_reader = GpsReader()
-    payload_builder = DetectionPayloadBuilder(clock)
+    payload_builder = DetectionPayloadBuilder()
 
     sender = None
 

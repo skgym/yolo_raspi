@@ -16,14 +16,7 @@ from raspi_app.camera_check import (
     save_crops,
     save_label_txt,
 )
-from raspi_app.config import (
-    CLOCK_SYNC_SAMPLES,
-    ENDPOINT_URL,
-    QUEUE_SIZE,
-    SEND_TIMEOUT,
-    TIME_URL,
-)
-from raspi_app.clock_sync import ClockSynchronizer
+from raspi_app.config import ENDPOINT_URL, QUEUE_SIZE, SEND_TIMEOUT
 from raspi_app.gps_reader import GpsReader
 from raspi_app.payload_builder import DetectionPayloadBuilder
 from raspi_app.result_sender import BackgroundResultSender
@@ -52,7 +45,7 @@ def parse_args():
     parser.add_argument(
         "--no-send",
         action="store_true",
-        help="do not synchronize clock or send results",
+        help="do not send results",
     )
     parser.add_argument("--no-save", action="store_true", help="do not save annotated mp4")
     parser.add_argument("--no-save-txt", action="store_true", help="do not save label txt files")
@@ -99,8 +92,10 @@ def main():
             "arguments": vars(args),
             "source": source,
             "model": args.model,
-            "time_url": TIME_URL,
             "endpoint_url": ENDPOINT_URL,
+            # NTPはアプリ外で管理し、JSONにはOSのUnix時刻をms単位で記録する。
+            "clock_source": "system_unix_time_ms",
+            "ntp_managed_externally": True,
         },
     )
     # モデル読み込み中も温度やCPU負荷を残せるよう、この時点で計測を開始する。
@@ -116,21 +111,11 @@ def main():
         run_logger.stop()
         raise
 
-    # 送信する場合だけサーバー時刻との差分を測る。
-    # --no-sendではネットワークへ一切接続せず、ローカル時刻をそのまま使う。
-    clock = ClockSynchronizer(
-        time_url=TIME_URL,
-        samples=CLOCK_SYNC_SAMPLES,
-        timeout=SEND_TIMEOUT,
-    )
-    clock_offset = 0.0 if args.no_send else clock.synchronize()
-    run_logger.log_event(
-        "INFO",
-        f"clock synchronized: offset_ms={round(clock_offset * 1000, 3)}",
-    )
+    # PCとの時刻同期はNerveNet構築後にOSのNTP機能で行う。
+    run_logger.log_event("INFO", "clock source: system Unix time (external NTP)")
 
     gps_reader = GpsReader()
-    payload_builder = DetectionPayloadBuilder(clock)
+    payload_builder = DetectionPayloadBuilder()
 
     sender = None
 
@@ -173,7 +158,6 @@ def main():
                 "actual_capture_height": frame_height,
                 "actual_capture_fps": actual_fps,
                 "actual_capture_fourcc": actual_fourcc,
-                "clock_offset_ms": round(clock_offset * 1000, 3),
             }
         )
 
@@ -217,7 +201,7 @@ def main():
             annotated_frame = result.plot()
             render_ms = (time.perf_counter() - render_started) * 1000
 
-            # 各フレームの推論結果に、その時点の GPS と補正済み時刻を付けて送信する。
+            # 各フレームの推論結果に、その時点のGPSとOS時刻を付けて送信する。
             gps_data = gps_reader.get_current()
             payload = payload_builder.build(result=result, gps_data=gps_data)
             run_logger.log_detections(

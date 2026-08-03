@@ -1,12 +1,13 @@
 """Ultralyticsの推論結果をIsaac Sim送信用の辞書へ変換する。"""
 
+import time
+
 
 class DetectionPayloadBuilder:
     """YOLO の Result オブジェクトを送信用 JSON payload に変換する。"""
 
-    def __init__(self, clock):
-        """補正済み時刻を取得する時計とフレーム連番を初期化する。"""
-        self.clock = clock
+    def __init__(self):
+        """送信先で処理順を確認するためのフレーム連番を初期化する。"""
         # 送信先でフレームの順序を追えるよう、アプリ側で連番を振る。
         self.frame_id = 0
 
@@ -16,8 +17,8 @@ class DetectionPayloadBuilder:
 
         payload = {
             "frame_id": self.frame_id,
-            # timestamp_send と t_proc はどちらもミリ秒単位で送る。
-            "timestamp_send": self.clock.now_ms(),
+            # OSのUnix時刻をms単位で記録する。時計のNTP同期はアプリ外で行う。
+            "timestamp_send": time.time_ns() // 1_000_000,
             "t_proc": self._get_processing_time(result),
             "gps": gps_data,
             "detections": [],

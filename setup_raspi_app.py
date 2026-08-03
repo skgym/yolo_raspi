@@ -13,59 +13,12 @@ FILES = {
     "raspi_app/__init__.py": '''"""Raspberry Pi上でYOLO推論結果を送信するアプリ群。"""\n''',
     "raspi_app/config.py": '''"""Isaac Sim側サーバーへの接続と送信キューに関する共通設定。"""
 
-# サーバー時刻の取得先と、検知結果の送信先。
-TIME_URL = "http://192.168.0.122:40000/time"
+# 検知結果の送信先。時計はNerveNet構築後にOSのNTP機能で同期する。
 ENDPOINT_URL = "http://192.168.0.122:40000/endpoint"
 
-# 通信待ち時間、未送信キュー数、時刻同期の試行回数。
+# 通信待ち時間と未送信キュー数。
 SEND_TIMEOUT = 2.0
 QUEUE_SIZE = 1
-CLOCK_SYNC_SAMPLES = 5
-''',
-    "raspi_app/clock_sync.py": '''"""Raspberry Piとサーバーの時計のずれを簡易的に補正する。"""
-
-import time
-import requests
-
-
-class ClockSynchronizer:
-    """HTTP応答から時刻差を推定し、補正済み時刻を提供する。"""
-
-    def __init__(self, time_url, samples=5, timeout=2.0):
-        """時刻API、試行回数、通信タイムアウトを設定する。"""
-        self.time_url = time_url
-        self.samples = samples
-        self.timeout = timeout
-        self.time_offset = 0.0
-
-    def synchronize(self):
-        """複数回の往復時間からサーバーとの時刻差を推定する。"""
-        offsets = []
-
-        for _ in range(self.samples):
-            try:
-                t1 = time.time()
-                response = requests.get(self.time_url, timeout=self.timeout)
-                response.raise_for_status()
-                t4 = time.time()
-
-                server_time = response.json()["server_time"]
-                rtt = t4 - t1
-                latency = rtt / 2
-                offset = server_time - (t1 + latency)
-                offsets.append(offset)
-
-            except Exception as e:
-                print(f"[ClockSynchronizer] failed: {e}")
-
-        if offsets:
-            self.time_offset = sum(offsets) / len(offsets)
-
-        return self.time_offset
-
-    def now(self):
-        """推定した時刻差を反映した現在時刻を返す。"""
-        return time.time() + self.time_offset
 ''',
     "raspi_app/gps_reader.py": '''"""GPS情報を推論結果へ追加するための読み取り処理。"""
 
@@ -83,13 +36,14 @@ class GpsReader:
 ''',
     "raspi_app/payload_builder.py": '''"""YOLO推論結果を送信用の辞書へ変換する。"""
 
+import time
+
 
 class DetectionPayloadBuilder:
     """フレーム単位の時刻、GPS、検知結果を送信用にまとめる。"""
 
-    def __init__(self, clock):
-        """補正済み時刻を取得する時計とフレーム連番を初期化する。"""
-        self.clock = clock
+    def __init__(self):
+        """送信先で処理順を確認するためのフレーム連番を初期化する。"""
         self.frame_id = 0
 
     def build(self, result, gps_data=None):
@@ -98,7 +52,8 @@ class DetectionPayloadBuilder:
 
         payload = {
             "frame_id": self.frame_id,
-            "timestamp_send": self.clock.now(),
+            # OSのUnix時刻をms単位で記録する。NTP同期はアプリ外で行う。
+            "timestamp_send": time.time_ns() // 1_000_000,
             "t_proc": self._get_processing_time(result),
             "gps": gps_data,
             "detections": [],
@@ -123,7 +78,7 @@ class DetectionPayloadBuilder:
             if value is not None:
                 total_ms += value
 
-        return total_ms / 1000.0
+        return round(total_ms, 3)
 
     def _build_detection(self, result, box):
         """1つの検知枠をJSON化可能な辞書へ変換する。"""
@@ -229,33 +184,23 @@ class BackgroundResultSender:
 from ultralytics import YOLO
 
 from raspi_app.config import (
-    CLOCK_SYNC_SAMPLES,
     ENDPOINT_URL,
     QUEUE_SIZE,
     SEND_TIMEOUT,
-    TIME_URL,
 )
-from raspi_app.clock_sync import ClockSynchronizer
 from raspi_app.gps_reader import GpsReader
 from raspi_app.payload_builder import DetectionPayloadBuilder
 from raspi_app.result_sender import BackgroundResultSender
 
 
 def main():
-    """モデル、時刻補正、GPS、非同期送信を組み合わせて推論を実行する。"""
+    """モデル、OS時刻、GPS、非同期送信を組み合わせて推論を実行する。"""
     # YOLOモデルを読み込み、カメラからストリーム形式で推論する。
     model = YOLO("yolo11n.pt")
 
-    # サーバー時刻との差を先に測り、送信時刻を補正する。
-    clock = ClockSynchronizer(
-        time_url=TIME_URL,
-        samples=CLOCK_SYNC_SAMPLES,
-        timeout=SEND_TIMEOUT,
-    )
-    clock.synchronize()
-
+    # PCとの時刻同期はアプリ外のNTPに任せる。
     gps_reader = GpsReader()
-    payload_builder = DetectionPayloadBuilder(clock)
+    payload_builder = DetectionPayloadBuilder()
 
     sender = BackgroundResultSender(
         endpoint_url=ENDPOINT_URL,
